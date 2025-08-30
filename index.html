@@ -1,0 +1,73 @@
+<!-- FILE: index.html -->
+
+
+<label for="bangla">Bangla prompt (type or paste):</label>
+<textarea id="bangla" placeholder="এখানে বাংলা লিখুন...">একটা মহাকাব্যিক দৃশ্য যেখানে সিংহ এবং বাঘ লড়ছে জঙ্গলের মাঝে</textarea>
+
+
+<div class="row">
+<select id="target">
+<option value="image">Image (MidJourney / Stable Diffusion)</option>
+<option value="chat">Chat (ChatGPT / assistant)</option>
+<option value="design">Design / Stock (Freepik / Canva)</option>
+</select>
+<button id="translate">Translate</button>
+<button id="copyOutput">Copy Output</button>
+</div>
+
+
+<div class="card">
+<h3>English Prompt</h3>
+<pre id="output">(Click Translate)</pre>
+<p id="explain" class="small"></p>
+</div>
+
+
+<script>
+const translateBtn = document.getElementById('translate');
+const copyBtn = document.getElementById('copyOutput');
+const output = document.getElementById('output');
+const explain = document.getElementById('explain');
+
+
+translateBtn.addEventListener('click', async () => {
+const bangla = document.getElementById('bangla').value.trim();
+const target = document.getElementById('target').value;
+if (!bangla) return alert('বাংলা টেক্সট লিখুন।');
+
+
+output.textContent = 'Translating...';
+explain.textContent = '';
+
+
+try {
+const res = await fetch('/api/translate', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ bangla, target })
+});
+const data = await res.json();
+if (data.error) {
+output.textContent = 'Error: ' + data.error;
+} else {
+output.textContent = data.prompt;
+explain.textContent = data.explainBangla || '';
+}
+} catch (err) {
+output.textContent = 'Network error. Check console.';
+console.error(err);
+}
+});
+
+
+copyBtn.addEventListener('click', async () => {
+try {
+await navigator.clipboard.writeText(output.textContent || '');
+alert('Copied to clipboard');
+} catch (e) {
+alert('Copy failed');
+}
+});
+</script>
+</body>
+</html>
