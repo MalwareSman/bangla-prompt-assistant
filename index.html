@@ -1,59 +1,21 @@
-<!-- FILE: index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Bangla Prompt Assistant</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      margin-bottom: 10px;
-    }
-    .row {
-      margin: 10px 0;
-    }
-    select, button {
-      padding: 8px;
-      margin-right: 10px;
-    }
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 15px;
-      margin-top: 20px;
-      background: #f9f9f9;
-    }
-    pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      background: #fff;
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-    .small {
-      font-size: 0.9em;
-      color: #555;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+    .row { margin: 10px 0; }
+    .card { border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-top: 15px; }
+    button { margin-right: 5px; padding: 5px 10px; }
+    pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-
-  <h1>Bangla Prompt Assistant</h1>
-
-  <!-- Textarea for Bangla input -->
   <label for="bangla">Bangla prompt (type or paste):</label>
-  <textarea id="bangla" placeholder="এখানে বাংলা লিখুন...">
-একটা মহাকাব্যিক দৃশ্য যেখানে সিংহ এবং বাঘ লড়ছে জঙ্গলের মাঝে
-  </textarea>
+  <textarea id="bangla" placeholder="এখানে বাংলা লিখুন...">একটা মহাকাব্যিক দৃশ্য যেখানে সিংহ এবং বাঘ লড়ছে জঙ্গলের মাঝে</textarea>
 
-  <!-- Select target type -->
   <div class="row">
     <select id="target">
       <option value="image">Image (MidJourney / Stable Diffusion)</option>
@@ -64,7 +26,6 @@
     <button id="copyOutput">Copy Output</button>
   </div>
 
-  <!-- Output card -->
   <div class="card">
     <h3>English Prompt</h3>
     <pre id="output">(Click Translate)</pre>
@@ -72,16 +33,14 @@
   </div>
 
   <script>
-    // ⬇️ CHANGE THIS to your Render backend URL!
-    // Example: "https://bangla-prompt-backend.onrender.com"
-    const API_BASE = "https://YOUR-RENDER-URL.onrender.com";
-
     const translateBtn = document.getElementById('translate');
     const copyBtn = document.getElementById('copyOutput');
     const output = document.getElementById('output');
     const explain = document.getElementById('explain');
 
-    // Translate button click
+    // 🚨 Replace with your real API key
+    const OPENAI_API_KEY = "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";
+
     translateBtn.addEventListener('click', async () => {
       const bangla = document.getElementById('bangla').value.trim();
       const target = document.getElementById('target').value;
@@ -91,18 +50,28 @@
       explain.textContent = '';
 
       try {
-        const res = await fetch(`${API_BASE}/api/translate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bangla, target })
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: "You are a translator that converts Bangla text into polished English prompts for AI tools." },
+              { role: "user", content: `Bangla: ${bangla}. Target type: ${target}. Please translate into English.` }
+            ]
+          })
         });
 
         const data = await res.json();
         if (data.error) {
-          output.textContent = 'Error: ' + data.error;
+          output.textContent = 'Error: ' + data.error.message;
         } else {
-          output.textContent = data.prompt;
-          explain.textContent = data.explainBangla || '';
+          const english = data.choices[0].message.content.trim();
+          output.textContent = english;
+          explain.textContent = "Translated successfully.";
         }
       } catch (err) {
         output.textContent = 'Network error. Check console.';
@@ -110,7 +79,6 @@
       }
     });
 
-    // Copy button click
     copyBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(output.textContent || '');
@@ -120,6 +88,5 @@
       }
     });
   </script>
-
 </body>
 </html>
